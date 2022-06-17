@@ -1,13 +1,27 @@
-const graphQL = require("graphql")
+const graphql = require("graphql")
 
-const { GraphQLObjectType, GraphQLString,GraphQLSchema } = graphql;
+const { GraphQLObjectType, GraphQLString, GraphQLInt, GraphQLSchema } = graphql;
 
+const users = [
+    {
+        name: 'Rajan shah',
+        phone: 7621982258,
+        email: "shahrajan7621@gmail.com",
+        id: '02'
+    },
+    {
+        name: 'Shah Rajan',
+        phone: 8460038564,
+        email: "shahrajan001@gmail.com",
+        id: '01'
+    }
+]
 const userType = new GraphQLObjectType({
     name: 'User',
     fields: () => ({
         id: { type: GraphQLString },
         name: { type: GraphQLString },
-        phone: { type: GraphQLString },
+        phone: { type: GraphQLInt },
         email: { type: GraphQLString },
     })
 })
@@ -19,7 +33,7 @@ const RootQuery = new GraphQLObjectType({
             type: userType,
             args: { id: { type: GraphQLString } },
             resolve(parent, args) {
-                args.id
+                return users.findOne({id:args.id})
 
             }
         }
