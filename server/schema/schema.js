@@ -1,47 +1,17 @@
 const graphql = require("graphql")
 const _ = require("lodash")
 
-const { GraphQLObjectType, GraphQLString, GraphQLInt, GraphQLID, GraphQLList, GraphQLSchema } = graphql;
+const { 
+    GraphQLObjectType, 
+    GraphQLString, 
+    GraphQLInt, 
+    GraphQLID, 
+    GraphQLList,
+    GraphQLSchema,
+    GraphQLNonNull } = graphql;
 
 const Users = require('../models/users')
 const Posts = require('../models/posts')
-// const users = [
-//     {
-//         name: 'Rajan shah',
-//         phone: 7621982258,  //cant use
-//         email: "shahrajan7621@gmail.com",
-//         id: '2'
-//     },
-//     {
-//         name: 'Shah Rajan',
-//         phone: 8460038564,
-//         email: "shahrajan001@gmail.com",
-//         id: '1'
-//     }
-// ]
-
-// const userPosts = [
-//     {
-//         likesCount: 54,
-//         commentsCount: 12,
-//         id: '2',
-//         userId: '1'
-//     },
-//     {
-//         likesCount: 108,
-//         commentsCount: 8,
-//         id: '1',
-//         userId: '1'
-//     },
-//     {
-//         likesCount: 1050,
-//         commentsCount: 58,
-//         id: '3',
-//         userId: '2'
-//     },
-
-// ]
-
 
 const userType = new GraphQLObjectType({
     name: 'User',
@@ -51,17 +21,17 @@ const userType = new GraphQLObjectType({
         phone: { type: GraphQLInt }, //cant use
         email: { type: GraphQLString },
         posts: {
-            type: new GraphQLList(dataCountType),
+            type: new GraphQLList(PostsCountType),
             resolve(parent,args){
-                console.log(parent)
-                return  _.filter(userPosts, { userId: parent.id })
+                // return  _.filter(userPosts, { userId: parent.id })
+                return Posts.find({userId: parent._id});
             }
         }
     })
 })
 
-const dataCountType = new GraphQLObjectType({
-    name: 'Data',
+const PostsCountType = new GraphQLObjectType({
+    name: 'Post',
     fields: () => ({
         userId: { type: GraphQLID },
         commentsCount: { type: GraphQLInt },
@@ -69,8 +39,9 @@ const dataCountType = new GraphQLObjectType({
         user: {
             type: userType,
             resolve(parent,args){
-                console.log(parent)
-                return  _.find(users, { id: parent.userId })
+                // console.log(parent)
+                // return  _.find(users, { id: parent.userId })
+                return Users.findById(parent.userId);
             }
         }
     })
@@ -83,20 +54,28 @@ const RootQuery = new GraphQLObjectType({
             type: userType,
             args: { id: { type: GraphQLID } },
             resolve(parent, args) {
-                return _.find(users, { id: args.id })
+                // return _.find(users, { id: args.id })
+                return Users.findById(args.id);
             }
         },
-        data: {
-            type: dataCountType,
+        post: {
+            type: PostsCountType,
             args: { id: { type: GraphQLID } },
             resolve(parent, args) {
-                return _.find(userPosts, { id: args.id })
+                // return _.find(userPosts, { id: args.id })
+                return Posts.findById(args.id );
             }
         },
         users: {
             type: new GraphQLList(userType),
             resolve(parent, args) {
-                return users
+                return Users.find({})
+            }    
+        },
+        posts: {
+            type: new GraphQLList(PostsCountType),
+            resolve(parent, args) {
+                return Posts.find({})
             }    
         }
     }
@@ -108,9 +87,9 @@ const Mutation = new GraphQLObjectType({
         addUser: {
             type: userType,
             args: {
-                name: { type: GraphQLString },
-                phone: { type: GraphQLInt }, //cant use
-                email: { type: GraphQLString },
+                name: { type: new GraphQLNonNull(GraphQLString) },
+                phone: { type: new GraphQLNonNull(GraphQLInt) }, //cant use
+                email: { type: new GraphQLNonNull(GraphQLString) },
             },
             resolve(parent, args){
                 let user = new Users({
@@ -122,11 +101,11 @@ const Mutation = new GraphQLObjectType({
             }
         },
         addPost :{
-            type: dataCountType,
+            type: PostsCountType,
             args:{
                 commentsCount: { type: GraphQLInt },
                 likesCount: { type: GraphQLInt },
-                userId: { type: GraphQLID },
+                userId: { type: new GraphQLNonNull(GraphQLID) },
             },
             resolve(parent, args){
                 let post = new Posts({
